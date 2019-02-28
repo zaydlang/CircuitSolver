@@ -85,7 +85,13 @@ class Solver:
                     
             elif self.state == "remove":
                 remove = input("Which connection to remove? (Format: A, B)\n").split(", ")
-                self.graph[remove[0]].pop(remove[1])
+                self.debug("remove " + remove[1] + " from " + remove[0])
+                try:
+                    self.graph[remove[0]].remove(remove[1])
+                    if len(self.graph[remove[0]]) == 0:
+                        self.graph.pop(remove[0], None)
+                except:
+                    print("Invalid input.")
 
     # Prints a debug message
     def debug(self, message):
