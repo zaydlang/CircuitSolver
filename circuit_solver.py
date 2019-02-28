@@ -12,6 +12,8 @@ class Connection:
 class Solver:
     # Initialize the circuit and state
     def __init__(self):
+        #self.graph = {'A': [Connection('B'), Connection('C')],
+        #              'B': [Connection('C'), Connection('D')]}
         self.graph = {}
         self.state = "menu"
 
@@ -20,7 +22,7 @@ class Solver:
         print("Electric Circuit Solver")
         print("(0) Set Node Connections")
         print("(1) Evaluate Circuit")
-        print("(1) Set Resistors")
+        print("(2) Set Resistors")
         print("(3) Quit")
 
     # Display the current circuit
@@ -31,7 +33,11 @@ class Solver:
                 print(key + " -> " + ', '.join(e.tail for e in self.graph[key]))
 
     # Display connections
-    
+    def display_connections(self):
+        for key in self.graph:
+            for tail in self.graph[key]:
+                print(key + " -> " + tail.tail + " (" + str(tail.resistance) + " Ohms)")
+
     # Run the menu
     def run(self):
         while self.state != "quit":
@@ -40,8 +46,14 @@ class Solver:
             # Main menu
             if self.state == "menu":
                 self.display_menu()
-                choice = int(input())
-                if choice < 0 or choice > 2:
+                
+                try:
+                    choice = int(input())
+                except:
+                    print("Invalid input.")
+                    continue
+                
+                if choice < 0 or choice > 3:
                     print("Choice out of bounds!")
                 else:
                     if choice == 0:
@@ -49,7 +61,7 @@ class Solver:
                     elif choice == 1:
                         self.state = "evaluate"
                     elif choice == 2:
-                        self.state == "resistor"
+                        self.state = "resistor"
                     elif choice == 3:
                         self.state = "quit"
 
@@ -57,6 +69,10 @@ class Solver:
             if self.state == "connections":
                 self.edit_graph()
 
+            # Editting Resistors
+            if self.state == "resistor":
+                self.edit_resistors()
+                
     # Editting Circuit
     def edit_graph(self):
         while self.state != "menu":
@@ -82,7 +98,7 @@ class Solver:
             if self.state == "add":
                 connection = input("Give me a connection to add (Format: A -> [B, C])\n").replace(' ', '')
                 # Make sure input is valid
-                head = re.findall("^[A-Z,a-z](?=-)", connection)
+                head = re.findall("^[A-Z,a-z]?(?=-)", connection)
                 tail = re.findall("(?<=[\[,, ])[A-Z,a-z]", connection)
                 # If no matches (or too many)
                 if (len(head) != 1 or len(tail) < 1):
@@ -105,11 +121,26 @@ class Solver:
                 except:
                     print("Invalid input.")
 
+    # Edit resistor values
     def edit_resistors(self):
         while self.state != "menu":
             self.debug("state : " + self.state)
-
-            self.list(connections)
+            self.display_connections()
+            print("Which resistor to set? (Format: A -> B 30) Type quit to go to the menu.")
+            connection = input().replace(" ", "")
+            if connection == "quit" or connection == "menu":
+                self.state = "menu"
+            else:
+                head = re.findall("^[A-Z,a-z](?=-)?", connection)
+                tail = re.findall("(?<=[(>)])[A-Z,a-z]?", connection)
+                resistance = re.findall("[0-9]+$", connection)
+                
+                #try:
+                self.debug("set " + str(head) + " , " + str(tail) + " to " + str(resistance))
+                connect = list(x for x in self.graph[head[0]] if x.tail == str(tail[0]))[0]
+                connect.resistance = int(resistance[0])
+                #except:
+                #    print("Invalid input.")
         
     # Prints a debug message
     def debug(self, message):
