@@ -7,23 +7,26 @@ DEBUG = True
 class Connection:
     def __init__(self, tail):
         self.tail = tail
-        self.resistance = 0
+        # Value is ohms if not battery, volts if battery
+        self.value = 0
+        self.is_battery = False
 
 class Solver:
     # Initialize the circuit and state
     def __init__(self):
-        #self.graph = {'A': [Connection('B'), Connection('C')],
-        #              'B': [Connection('C'), Connection('D')]}
-        self.graph = {}
+        self.graph = {'A': [Connection('B'), Connection('C')],
+                      'B': [Connection('C'), Connection('D')]}
+        #self.graph = {}
         self.state = "menu"
 
     # Display the main menu
     def display_menu(self):
         print("Electric Circuit Solver")
         print("(0) Set Node Connections")
-        print("(1) Evaluate Circuit")
-        print("(2) Set Resistors")
-        print("(3) Quit")
+        print("(1) Set Resistors")
+        print("(2) Set Battery")
+        print("(3) Evaluate Circuit")
+        print("(4) Quit")
 
     # Display the current circuit
     def display_graph(self):
@@ -36,7 +39,11 @@ class Solver:
     def display_connections(self):
         for key in self.graph:
             for tail in self.graph[key]:
-                print(key + " -> " + tail.tail + " (" + str(tail.resistance) + " Ohms)")
+                # Display the battery connection as well as the resistor
+                if tail.is_battery:
+                    print(key + " -> " + tail.tail + " (" + str(tail.value) + " Volts)")
+                else:
+                    print(key + " -> " + tail.tail + " (" + str(tail.value) + " Ohms)")
 
     # Run the menu
     def run(self):
@@ -53,16 +60,18 @@ class Solver:
                     print("Invalid input.")
                     continue
                 
-                if choice < 0 or choice > 3:
+                if choice < 0 or choice > 4:
                     print("Choice out of bounds!")
                 else:
                     if choice == 0:
                         self.state = "connections"
                     elif choice == 1:
-                        self.state = "evaluate"
-                    elif choice == 2:
                         self.state = "resistor"
+                    elif choice == 2:
+                        self.state = "battery"
                     elif choice == 3:
+                        self.state = "evaluate"
+                    elif choice == 4:
                         self.state = "quit"
 
             # Editting Circuit
@@ -72,6 +81,10 @@ class Solver:
             # Editting Resistors
             if self.state == "resistor":
                 self.edit_resistors()
+
+            # Setting Battery
+            if self.state == "battery":
+                self.set_battery()
                 
     # Editting Circuit
     def edit_graph(self):
@@ -135,12 +148,35 @@ class Solver:
                 tail = re.findall("(?<=[(>)])[A-Z,a-z]?", connection)
                 resistance = re.findall("[0-9]+$", connection)
                 
-                #try:
-                self.debug("set " + str(head) + " , " + str(tail) + " to " + str(resistance))
-                connect = list(x for x in self.graph[head[0]] if x.tail == str(tail[0]))[0]
-                connect.resistance = int(resistance[0])
-                #except:
-                #    print("Invalid input.")
+                try:
+                    self.debug("set " + str(head) + " , " + str(tail) + " to " + str(resistance))
+                    connect = list(x for x in self.graph[head[0]] if x.tail == str(tail[0]))[0]
+                    connect.value = int(resistance[0])
+                    connect.is_battery = False
+                except:
+                    print("Invalid input.")
+
+    # Set battery
+    def set_battery(self):
+        while self.state != "menu":
+            self.debug("state : " + self.state)
+            self.display_connections()
+            print("Which connection is the battery, and what's its EMF? (Format: A -> B 30) Type quit to go to the menu.")
+            connection = input().replace(" ", "")
+            if connection == "quit" or connection == "menu":
+                self.state = "menu"
+            else:
+                head = re.findall("^[A-Z,a-z](?=-)?", connection)
+                tail = re.findall("(?<=[(>)])[A-Z,a-z]?", connection)
+                volts = re.findall("[0-9]+$", connection)
+                
+                try:
+                    self.debug("set " + str(head) + " , " + str(tail) + " to " + str(volts))
+                    connect = list(x for x in self.graph[head[0]] if x.tail == str(tail[0]))[0]
+                    connect.value = int(volts[0])
+                    connect.is_battery = True
+                except:
+                    print("Invalid input.")
         
     # Prints a debug message
     def debug(self, message):
