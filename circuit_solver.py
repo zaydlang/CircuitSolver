@@ -2,6 +2,13 @@ import re
 
 DEBUG = True
 
+# TODO: make sure there are no loops in the graph lol
+
+class Connection:
+    def __init__(self, tail):
+        self.tail = tail
+        self.resistance = 0
+
 class Solver:
     # Initialize the circuit and state
     def __init__(self):
@@ -13,15 +20,18 @@ class Solver:
         print("Electric Circuit Solver")
         print("(0) Set Node Connections")
         print("(1) Evaluate Circuit")
-        print("(2) Quit")
+        print("(1) Set Resistors")
+        print("(3) Quit")
 
     # Display the current circuit
     def display_graph(self):
         if len(self.graph) > 0:
             print("Current circuit: ")
             for key in self.graph:
-                print(key + " -> " + ', '.join(e for e in self.graph[key]))
+                print(key + " -> " + ', '.join(e.tail for e in self.graph[key]))
 
+    # Display connections
+    
     # Run the menu
     def run(self):
         while self.state != "quit":
@@ -39,6 +49,8 @@ class Solver:
                     elif choice == 1:
                         self.state = "evaluate"
                     elif choice == 2:
+                        self.state == "resistor"
+                    elif choice == 3:
                         self.state = "quit"
 
             # Editting Circuit
@@ -81,18 +93,24 @@ class Solver:
                     if head[0] not in self.graph:
                         self.graph[head[0]] = []
                     # No duplicates
-                    self.graph[head[0]] = self.graph[head[0]] + list(connect for connect in tail if connect not in self.graph[head[0]])
+                    self.graph[head[0]] = self.graph[head[0]] + list(Connection(connect) for connect in tail if connect not in self.graph[head[0]])
                     
             elif self.state == "remove":
                 remove = input("Which connection to remove? (Format: A, B)\n").split(", ")
                 self.debug("remove " + remove[1] + " from " + remove[0])
                 try:
-                    self.graph[remove[0]].remove(remove[1])
+                    self.graph[remove[0]] = [x for x in self.graph[remove[0]] if x.tail != remove[1]]
                     if len(self.graph[remove[0]]) == 0:
                         self.graph.pop(remove[0], None)
                 except:
                     print("Invalid input.")
 
+    def edit_resistors(self):
+        while self.state != "menu":
+            self.debug("state : " + self.state)
+
+            self.list(connections)
+        
     # Prints a debug message
     def debug(self, message):
         if DEBUG:
